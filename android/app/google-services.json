@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "531000503884",
+    "firebase_url": "https://packagebox-37ca4-default-rtdb.firebaseio.com",
+    "project_id": "packagebox-37ca4",
+    "storage_bucket": "packagebox-37ca4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:531000503884:android:8f3c870eb9d793a5414ee9",
+        "android_client_info": {
+          "package_name": "com.example.apps_packagebox"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDHlOpVNmvkcVmy890ctLp2WSLefQA_jqg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
