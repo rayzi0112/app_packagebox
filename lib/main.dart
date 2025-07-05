@@ -1,25 +1,18 @@
-import 'package:apps_packagebox/screens/notification_screen.dart';
+
+import 'package:apps_packagebox/domain/notification_service.dart';
+import 'package:apps_packagebox/notification_screen.dart';
+import 'package:apps_packagebox/presentasion/pages/auth_section/auth_choice.dart';
+import 'package:apps_packagebox/presentasion/pages/auth_section/signin_page.dart';
+import 'package:apps_packagebox/presentasion/pages/auth_section/signup_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'welcome_screen.dart';
-import 'auth/auth_choice.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:apps_packagebox/services/notification_service.dart';
-import 'auth/signin.dart';
-import 'auth/signup.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'pages/home_page.dart';
-
+import 'package:apps_packagebox/presentasion/pages/dashboard_section/home_page.dart';
 Future<void> main() async {
   try {
-    // Ensure Flutter bindings are initialized
     WidgetsFlutterBinding.ensureInitialized();
-    
-    // Initialize Firebase first
     await Firebase.initializeApp();
-
-    
-    // Only set up background message handler after Firebase is initialized
     FirebaseMessaging.onBackgroundMessage(
       NotificationService.firebaseMessagingBackgroundHandler,
     );
@@ -27,7 +20,6 @@ Future<void> main() async {
     runApp(MyApp());
   } catch (e) {
     print('Error initializing app: $e');
-    // You might want to show an error screen here
     runApp(
       MaterialApp(
         home: Scaffold(
@@ -50,11 +42,6 @@ class MyApp extends StatelessWidget {
     final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
     final isNotificationEnabled = prefs.getBool('isNotificationEnabled') ?? false;
 
-    // Logika navigasi yang diperbaiki:
-    // 1. Jika sudah login, langsung ke HomePage (tidak peduli status notifikasi)
-    // 2. Jika belum login tapi notifikasi sudah pernah diatur, ke AuthChoiceScreen
-    // 3. Jika belum login dan notifikasi belum pernah diatur, ke NotificationScreen
-    
     if (isLoggedIn) {
       // Sudah login, langsung ke home
       return const HomePage();

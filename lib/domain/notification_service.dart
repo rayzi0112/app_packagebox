@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:apps_packagebox/pages/home_page.dart';
+import 'package:apps_packagebox/presentasion/pages/dashboard_section/home_page.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();

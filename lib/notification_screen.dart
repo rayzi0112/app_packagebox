@@ -1,7 +1,7 @@
+import 'package:apps_packagebox/domain/notification_service.dart';
+import 'package:apps_packagebox/presentasion/pages/auth_section/auth_choice.dart';
+import 'package:apps_packagebox/presentasion/pages/dashboard_section/home_page.dart';
 import 'package:flutter/material.dart';
-import 'package:apps_packagebox/services/notification_service.dart';
-import 'package:apps_packagebox/pages/home_page.dart';
-import 'package:apps_packagebox/auth/auth_choice.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationScreen extends StatefulWidget {

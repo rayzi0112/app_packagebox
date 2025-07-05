@@ -1,17 +1,41 @@
+import 'package:apps_packagebox/presentasion/pages/auth_section/auth_choice.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import '../models/box.dart';
-import '../auth/auth_choice.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
+}
+
+class Box {
+  final String id;
+  final String name;
+  final String type;
+  final DateTime timestamp;
+
+  Box({
+    required this.id,
+    required this.name,
+    required this.type,
+    required this.timestamp,
+  });
+
+  factory Box.fromJson(Map<String, dynamic> json) {
+    return Box(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      type: json['type']?.toString() ?? '',
+      timestamp: json['timestamp'] != null
+          ? DateTime.tryParse(json['timestamp'].toString()) ?? DateTime.now()
+          : DateTime.now(),
+    );
+  }
 }
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {

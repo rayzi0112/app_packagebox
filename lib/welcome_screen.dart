@@ -1,4 +1,4 @@
-import 'package:apps_packagebox/screens/notification_screen.dart';
+import 'package:apps_packagebox/notification_screen.dart';
 import 'package:flutter/material.dart';
 
 class WelcomeScreen extends StatefulWidget {

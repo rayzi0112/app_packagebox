@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:apps_packagebox/pages/home_page.dart';
-
+import 'package:apps_packagebox/presentasion/pages/dashboard_section/home_page.dart';
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
 
