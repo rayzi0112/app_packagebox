@@ -42,6 +42,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   String username = '';
   List<Box> boxes = [];
   bool isLoading = true;
+  bool isDeleting = false;
   late DateFormat _dateFormat;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -56,7 +57,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
-    
+
     _initializeDateFormatting().then((_) {
       _loadUserData();
       _fetchBoxes();
@@ -122,14 +123,115 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
+  Future<void> _deleteAllBoxes() async {
+    setState(() {
+      isDeleting = true;
+    });
+
+    try {
+      final response = await http.delete(
+        Uri.parse('https://api-packagebox.vercel.app/api/deleteboxes'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          setState(() {
+            boxes = [];
+            isDeleting = false;
+          });
+          _showSnackBar('Semua data box berhasil dihapus');
+        } else {
+          setState(() {
+            isDeleting = false;
+          });
+          _showSnackBar(data['message'] ?? 'Gagal menghapus data');
+        }
+      } else {
+        setState(() {
+          isDeleting = false;
+        });
+        _showSnackBar('Gagal menghapus data: ${response.statusCode}');
+      }
+    } catch (e) {
+      setState(() {
+        isDeleting = false;
+      });
+      _showSnackBar('Gagal menghapus data: ${e.toString()}');
+    }
+  }
+
+  void _showDeleteConfirmation() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        elevation: 12,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.delete_forever_rounded,
+                  color: Colors.red[600], size: 24),
+            ),
+            const SizedBox(width: 12),
+            const Text('Hapus Semua Data',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          ],
+        ),
+        content: const Text(
+          'Apakah Anda yakin ingin menghapus semua data box? Tindakan ini tidak dapat dibatalkan.',
+          style: TextStyle(fontSize: 16, height: 1.4),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.grey[600],
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Batal',
+                style: TextStyle(fontWeight: FontWeight.w500)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _deleteAllBoxes();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red[600],
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+              elevation: 2,
+            ),
+            child: const Text('Hapus Semua',
+                style: TextStyle(fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            Icon(Icons.info_outline, color: Colors.white, size: 20),
+            const Icon(Icons.info_outline, color: Colors.white, size: 20),
             const SizedBox(width: 12),
-            Expanded(child: Text(message, style: TextStyle(fontSize: 14))),
+            Expanded(
+                child: Text(message, style: const TextStyle(fontSize: 14))),
           ],
         ),
         backgroundColor: Colors.blueGrey[800],
@@ -160,10 +262,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 color: Colors.red.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.logout_rounded, color: Colors.red[600], size: 24),
+              child:
+                  Icon(Icons.logout_rounded, color: Colors.red[600], size: 24),
             ),
             const SizedBox(width: 12),
-            const Text('Logout', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            const Text('Logout',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           ],
         ),
         content: const Text(
@@ -177,9 +281,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             style: TextButton.styleFrom(
               foregroundColor: Colors.grey[600],
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
-            child: const Text('Batal', style: TextStyle(fontWeight: FontWeight.w500)),
+            child: const Text('Batal',
+                style: TextStyle(fontWeight: FontWeight.w500)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -187,11 +293,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               final prefs = await SharedPreferences.getInstance();
               await prefs.setBool('isLoggedIn', false);
               await prefs.remove('username');
-              
+
               if (mounted) {
                 Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(builder: (context) => const AuthChoiceScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => const AuthChoiceScreen()),
                   (route) => false,
                 );
               }
@@ -200,14 +307,29 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               backgroundColor: Colors.red[600],
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
               elevation: 2,
             ),
-            child: const Text('Logout', style: TextStyle(fontWeight: FontWeight.w600)),
+            child: const Text('Logout',
+                style: TextStyle(fontWeight: FontWeight.w600)),
           ),
         ],
       ),
     );
+  }
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return 'Selamat Pagi!';
+    } else if (hour < 15) {
+      return 'Selamat Siang!';
+    } else if (hour < 19) {
+      return 'Selamat Sore!';
+    } else {
+      return 'Selamat Malam!';
+    }
   }
 
   Widget _buildHeaderSection() {
@@ -239,7 +361,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               color: Colors.white.withOpacity(0.2),
               shape: BoxShape.circle,
             ),
-            child: Icon(
+            child: const Icon(
               Icons.person_rounded,
               color: Colors.white,
               size: 28,
@@ -251,7 +373,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Selamat datang,',
+                  _getGreeting(), // Ganti dengan greeting dinamis
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.9),
                     fontSize: 14,
@@ -276,12 +398,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               borderRadius: BorderRadius.circular(12),
             ),
             child: IconButton(
-              icon: const Icon(Icons.refresh_rounded, color: Colors.white),
-              onPressed: () {
-                setState(() => isLoading = true);
-                _fetchBoxes();
-              },
-              tooltip: 'Refresh',
+              icon: isDeleting
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Icon(Icons.delete_forever_rounded,
+                      color: Colors.white),
+              onPressed: isDeleting ? null : _showDeleteConfirmation,
+              tooltip: 'Hapus Semua Data',
             ),
           ),
         ],
@@ -308,7 +437,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           const SizedBox(width: 12),
           Expanded(
             child: _buildStatItem(
-              'Box Bergetar',
+              'Box Dibobol',
               getarCount.toString(),
               Icons.vibration_rounded,
               Colors.red,
@@ -319,7 +448,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildStatItem(String title, String count, IconData icon, Color color) {
+  Widget _buildStatItem(
+      String title, String count, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -369,12 +499,54 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
+  Widget _buildScrollHint() {
+    if (boxes.isEmpty) return const SizedBox.shrink();
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.blue[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.blue.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: Colors.blue[600],
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'Scroll untuk melihat data lainnya',
+            style: TextStyle(
+              color: Colors.blue[700],
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: Colors.blue[600],
+            size: 18,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildBoxCard(Box box, int index) {
     return FadeTransition(
       opacity: _fadeAnimation,
       child: SlideTransition(
         position: Tween<Offset>(
-          begin: Offset(0, 0.3),
+          begin: const Offset(0, 0.3),
           end: Offset.zero,
         ).animate(CurvedAnimation(
           parent: _animationController,
@@ -419,7 +591,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: (box.type == 'masuk' ? Colors.green : Colors.red)
+                            color: (box.type == 'masuk'
+                                    ? Colors.green
+                                    : Colors.red)
                                 .withOpacity(0.3),
                             spreadRadius: 1,
                             blurRadius: 6,
@@ -450,16 +624,23 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           ),
                           const SizedBox(height: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: (box.type == 'masuk' ? Colors.green : Colors.red)
+                              color: (box.type == 'masuk'
+                                      ? Colors.green
+                                      : Colors.red)
                                   .withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              box.type == 'masuk' ? 'Silakan ambil paket Anda' : 'Box Anda Dibobol! Silakan cek segera',
+                              box.type == 'masuk'
+                                  ? 'Silakan ambil paket Anda'
+                                  : 'Box Anda Dibobol! Silakan cek segera',
                               style: TextStyle(
-                                color: box.type == 'masuk' ? Colors.green[700] : Colors.red[700],
+                                color: box.type == 'masuk'
+                                    ? Colors.green[700]
+                                    : Colors.red[700],
                                 fontWeight: FontWeight.w600,
                                 fontSize: 12,
                               ),
@@ -540,7 +721,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 children: [
                   CircularProgressIndicator(
                     strokeWidth: 3,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.blue[600]!),
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(Colors.blue[600]!),
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -558,59 +740,67 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 _buildHeaderSection(),
                 _buildStatsCard(),
                 const SizedBox(height: 24),
+                // Show scroll hint if there are boxes
+                _buildScrollHint(),
                 Expanded(
-                  child: boxes.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                  child: RefreshIndicator(
+                    onRefresh: _fetchBoxes,
+                    color: Colors.blue[600],
+                    backgroundColor: Colors.white,
+                    child: boxes.isEmpty
+                        ? ListView(
+                            padding: const EdgeInsets.all(20),
                             children: [
-                              Container(
-                                width: 120,
-                                height: 120,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[100],
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  Icons.inbox_rounded,
-                                  size: 48,
-                                  color: Colors.grey[400],
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              Text(
-                                'Tidak ada paket',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  color: Colors.grey[600],
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Belum ada paket yang terdaftar\ndi sistem saat ini',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey[500],
-                                  height: 1.4,
+                              SizedBox(
+                                height: MediaQuery.of(context).size.height * 0.3,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Container(
+                                      width: 120,
+                                      height: 120,
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[100],
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.inbox_rounded,
+                                        size: 48,
+                                        color: Colors.grey[400],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 20),
+                                    Text(
+                                      'Tidak ada paket',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        color: Colors.grey[600],
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Belum ada paket yang terdaftar\ndi sistem saat ini',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey[500],
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
-                          ),
-                        )
-                      : RefreshIndicator(
-                          onRefresh: _fetchBoxes,
-                          color: Colors.blue[600],
-                          backgroundColor: Colors.white,
-                          child: ListView.builder(
+                          )
+                        : ListView.builder(
                             padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                             itemCount: boxes.length,
                             itemBuilder: (context, index) {
                               return _buildBoxCard(boxes[index], index);
                             },
                           ),
-                        ),
+                  ),
                 ),
               ],
             ),
